@@ -4,7 +4,7 @@ import socket
 
 
 if 'local' in socket.gethostname():
-    log_file_path = '/Users/wanggao/research/research.log'
+    log_file_path = '/Users/wanggao/git/research/research.log'
     host = 'gz-cdb-oi7jr91l.sql.tencentcdb.com'
     port = 62337
 else:
