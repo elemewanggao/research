@@ -9,7 +9,7 @@ notice = Blueprint('notice', __name__)
 
 
 @api_route(notice, '/', methods=['POST', 'GET'])
-def notice():
+def add_notice():
     params = get_request_args(request)
     content = params['content']
     is_open = params['is_open']
