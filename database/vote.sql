@@ -13,7 +13,7 @@ create table `vote` (
     `updated_at` datetime not null default current_timestamp on update current_timestamp comment '更新时间',
     primary key (`id`),
     key `ix_topic` (`topic`),
-    key `ix_wx_num` (`wx_num`),
+    key `ix_wx_open_id` (`wx_open_id`),
     key `ix_created_at` (`created_at`),
     key `ix_updated_at` (`updated_at`)
 ) engine=innodb default charset=utf8mb4 comment='投票主题表';
@@ -57,7 +57,7 @@ create table `feedback` (
     `created_at` datetime not null default current_timestamp comment '创建时间',
     `updated_at` datetime not null default current_timestamp on update current_timestamp comment '更新时间',
     primary key (`id`),
-    key `ix_wx_num` (`wx_num`),
+    key `ix_wx_open_id` (`wx_open_id`),
     key `ix_created_at` (`created_at`),
     key `ix_updated_at` (`updated_at`)
 ) engine=innodb default charset=utf8mb4 comment='反馈表';
@@ -71,10 +71,7 @@ create table `notice` (
     `created_at` datetime not null default current_timestamp comment '创建时间',
     `updated_at` datetime not null default current_timestamp on update current_timestamp comment '更新时间',
     primary key (`id`),
-    key `ix_wx_num` (`wx_num`),
+    key `ix_wx_open_id` (`wx_open_id`),
     key `ix_created_at` (`created_at`),
     key `ix_updated_at` (`updated_at`)
 ) engine=innodb default charset=utf8mb4 comment='通知表';
-
--- option为数据库关键字
-rename table `option` to `options`;

@@ -5,8 +5,12 @@ import socket
 
 if 'local' in socket.gethostname():
     log_file_path = '/Users/wanggao/research/research.log'
+    host = 'gz-cdb-oi7jr91l.sql.tencentcdb.com'
+    port = 62337
 else:
     log_file_path = '/data/log/ves/research/research.log'
+    host = '172.16.16.14'
+    port = 3306
 
 # 日志配置
 LOGGING = {
@@ -45,8 +49,8 @@ MYSQL = {
     'research': {
         'user': 'root',
         'passwd': '19900201wg!@',
-        'host': 'gz-cdb-5jhpc6jt.sql.tencentcdb.com',
-        'port': 62346,
+        'host': host,
+        'port': port,
         'db': 'research',
     }
 }

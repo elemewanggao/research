@@ -69,7 +69,7 @@ class Feedback(Base, BaseModel):
 
 
 class Notice(Base, BaseModel):
-    """反馈"""
+    """通知"""
     __tablename__ = 'notice'
     _db_name = 'research'
 
@@ -78,5 +78,6 @@ class Notice(Base, BaseModel):
     is_open = Column(SmallInteger)
     wx_nick_name = Column(String(32))
     wx_open_id = Column(String(32))
+    is_read = Column(SmallInteger)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.now)
