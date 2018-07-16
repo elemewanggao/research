@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-import collections
 from datetime import datetime
 from flask import Blueprint, request
 from research.utils.request import get_request_args
@@ -29,19 +28,21 @@ def get_vote(vote_id=None, creater_open_id=None, voter_open_id=None):
     """获取投票详情."""
     result = []
     conditions = []
+    common_vote_ids = []
     if vote_id:
         conditions.append(Vote.id == vote_id)
     if creater_open_id:
         conditions.append(Vote.wx_open_id == creater_open_id)
     if conditions:
         votes = Vote.query(Vote, filter=conditions)
-        vote_ids = [vote.id for vote in votes]
+        if votes:
+            common_vote_ids = [vote.id for vote in votes]
     if voter_open_id:
         revotes = ResultVote.query(ResultVote, filter=[
             ResultVote.voter_open_id == voter_open_id])
         revote_ids = [revote.id for revote in revotes]
-
-    common_vote_ids = list(set(vote_ids) & set(revote_ids))
+        if revote_ids:
+            common_vote_ids = list(set(common_vote_ids) & set(revote_ids))
 
     votes = Vote.query(Vote, filter=[Vote.id.in_(common_vote_ids)])
     for vote in votes:
@@ -51,11 +52,11 @@ def get_vote(vote_id=None, creater_open_id=None, voter_open_id=None):
             'topic': vote.topic,
             'desc': vote.desc,
             'pic': vote.pic,
-            'dealine': vote.dealine_time,
+            'dealine': str(vote.deadline_time),
             'is_anonymous': vote.is_anonymous,
             'sel_type': vote.sel_type,
             'is_open': vote.is_open,
-            'status': 1 if datetime.now() < vote.dealine_time else 2,
+            'status': 1 if datetime.now() < vote.deadline_time else 2,
             'creater_nick_name': vote.wx_nick_name,
             'creater_open_id': vote.wx_open_id}
         options = Options.query(Options, filter=[
@@ -74,54 +75,73 @@ def get_vote(vote_id=None, creater_open_id=None, voter_open_id=None):
 def edit_vote(*args, **kwargs):
     """修改投票详情"""
     vote_id = kwargs.pop('vote_id')
-    option_list = kwargs.pop('option')
+    option_list = kwargs.pop('options', [])
 
     Vote.update(kwargs, [Vote.id == vote_id])
 
-    options = Options.query(Options, filter=[Options.vote_id == vote_id])
-    for option in options:
-        opid = option.id
-        find_flag = False
-        for option_dict in option_list:
-            if opid == option_dict['id']:
-                option.desc = option_dict['desc']
-                option.pic = option_dict['pic']
-                find_flag = True
-                break
-        if not find_flag:
-            option.is_deleted = 1
-            # 对于删除的option，将已经选择的投票结果删除
-            ResultVote.update(
-                {'is_deleted': 1},
-                [ResultVote.option_id == opid])
+    option_ids = [
+        option['option_id'] for option in option_list if option.get('option_id')]
+    # 删除option
+    Options.update(
+        {'is_deleted': 1},
+        [~Options.id.in_(option_ids)])
+    # 对于删除的option，将已经选择的投票结果删除
+    ResultVote.update(
+        {'is_deleted': 1},
+        [~ResultVote.option_id.in_(option_ids)])
+
+    for option_dict in option_list:
+        option_id = option_dict.get('option_id')
+        desc = option_dict['desc']
+        pic = option_dict.get('pic')
+        if not option_id:
+            # 传入的option_id为None代表新加选项
+            Options(
+                desc=desc,
+                pic=pic,
+                vote_id=vote_id).add()
+            continue
+        Options.update(
+            {'desc': desc, 'pic': pic},
+            [Options.id == option_id,
+             Options.is_deleted == 0])
 
 
 def get_vote_result(vote_id):
-    conditions = [
-        ResultVote.is_deleted == 0,
-        ResultVote.vote_id == vote_id]
-    results = []
-    vote_results = ResultVote.query(ResultVote, filter=conditions)
-    total_voter_num = len(set(
-        [vote_result.wx_open_id for vote_result in vote_results]))
-    v = collections.defaultdict(list)
-    for vote_result in vote_results:
-        vid = vote_result.vote_id
-        opid = vote_result.option_id
-        v[(vid, opid)].append({
-            'wx_nick_name': vote_result.wx_nick_name,
-            'wx_open_id': vote_result.wx_open_id,
-            'avatar_url': vote_result.avatar_url
-        })
-    for key, value in v.iteritems():
-        vote_num = len(value)
-        results.append({
-            'vote_id': key[0],
-            'option_id': key[1],
+    """获取投票的结果."""
+    options = Options.query(
+        Options,
+        filter=[
+            Options.is_deleted == 0,
+            Options.vote_id == vote_id])
+    data = []
+    participant_num = ResultVote.count(
+        ResultVote.wx_open_id,
+        [ResultVote.is_deleted == 0,
+         ResultVote.vote_id == vote_id],
+        True)
+    for option in options:
+        option_id = option.id
+        vote_results = ResultVote.query(
+            ResultVote,
+            filter=[
+                ResultVote.is_deleted == 0,
+                ResultVote.option_id == option_id])
+        vote_num = len(vote_results)
+        voters = [
+            {'wx_nick_name': voter.wx_nick_name,
+             'wx_open_id': voter.wx_open_id,
+             'avatar_url': voter.avatar_url} for voter in vote_results]
+        data.append({
+            'option_id': option_id,
             'vote_num': vote_num,
-            'voters': value,
-            'vote_rate': (vote_num / total_voter_num * 1.0) * 100
+            'voters': voters,
+            'vote_rate': int(100.0 * vote_num / participant_num if participant_num else 0)
         })
+    return {
+        'participant_num': participant_num,
+        'data': data
+    }
 
 
 def post_vote_result(vote_id,
@@ -156,13 +176,12 @@ def vote_handler(*args, **kwargs):
 def vote_result_handle(*args, **kwargs):
     params = get_request_args(request)
     vote_id = params.get('vote_id')
-    option_id = params.get('option_id')
     option_id_list = params.get('option_id_list')
     voter_wx_name = params.get('voter_wx_name')
     voter_wx_open_id = params.get('voter_wx_open_id')
     avatar_url = params.get('avatar_url')
     if request.method == 'GET':
-        return get_vote_result(vote_id, option_id)
+        return get_vote_result(vote_id)
     elif request.method == 'POST':
         return post_vote_result(
             vote_id,

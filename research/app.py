@@ -21,8 +21,8 @@ def before_request():
 
 @app.after_request
 def after_request(response):
-    timing = (time.time() - request.begin_time) * 1000  # 精确到s
-    logger.info('request end, {method}:{url}=>response code:{code}, timing:{timing}s'.format(
+    timing = (time.time() - request.begin_time) * 1000  # 精确到ms
+    logger.info('request end, {method}:{url}=>response code:{code}, timing:{timing}ms'.format(
         method=request.method,
         url=request.url,
         code=response.status_code,

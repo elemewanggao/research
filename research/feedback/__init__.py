@@ -7,7 +7,7 @@ from research.model.vote import Feedback
 feedback = Blueprint('feedback', __name__)
 
 
-@api_route(feedback, '/', methods=['POST'])
+@api_route(feedback, '', methods=['POST'])
 def commit_feedback(*args, **kwargs):
     params = get_request_args(request)
     content = params['content']

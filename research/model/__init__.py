@@ -29,7 +29,9 @@ init_engines()
 
 
 def get_session(db):
-    return scoped_session(sessionmaker(bind=engines[db]))
+    return scoped_session(sessionmaker(
+        bind=engines[db],
+        expire_on_commit=False))
 
 
 @contextmanager
@@ -100,7 +102,8 @@ class BaseModel(object):
 
         eg: BaseModel.delete([BaseModel.a>1, BaseModel.b==2])
         """
-        session.query(cls).filter(*conditions).delete()
+        session.query(cls).filter(*conditions).delete(
+            synchronize_session='fetch')
 
     @classmethod
     @class_dbsession(True)
@@ -109,7 +112,9 @@ class BaseModel(object):
 
         eg: BaseModel.update({'name': 'jack'}, [BaseModel.id>=1])
         """
-        return session.query(cls).filter(*conditions).update(update_dict)
+        return session.query(cls).filter(*conditions).update(
+            update_dict,
+            synchronize_session='fetch')
 
     @classmethod
     @class_dbsession(True)
