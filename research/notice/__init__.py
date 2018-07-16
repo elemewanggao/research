@@ -9,7 +9,7 @@ notice = Blueprint('notice', __name__)
 
 
 @api_route(notice, '/', methods=['POST', 'GET'])
-def add_notice():
+def add_notice(*args, **kwargs):
     params = get_request_args(request)
     content = params['content']
     is_open = params['is_open']
@@ -36,7 +36,7 @@ def add_notice():
 
 
 @api_route(notice, '/tap', methods=['PUT'])
-def tap_notice():
+def tap_notice(*args, **kwargs):
     params = get_request_args(request)
     notice_id = params['notice_id']
     Notice.update(

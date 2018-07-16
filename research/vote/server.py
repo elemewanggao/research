@@ -141,8 +141,8 @@ def post_vote_result(vote_id,
     ResultVote.batch_add(results)
 
 
-@api_route(vote, '/', methods=['GET', 'POST', 'PUT'])
-def vote_handler():
+@api_route(vote, '', methods=['GET', 'POST', 'PUT'])
+def vote_handler(*args, **kwargs):
     params = get_request_args(request)
     if request.method == 'GET':
         return get_vote(**params)
@@ -153,7 +153,7 @@ def vote_handler():
 
 
 @api_route(vote, '/result', methods=['GET', 'POST'])
-def vote_result_handle():
+def vote_result_handle(*args, **kwargs):
     params = get_request_args(request)
     vote_id = params.get('vote_id')
     option_id = params.get('option_id')
