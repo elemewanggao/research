@@ -4,9 +4,11 @@ from flask import Blueprint, request
 from research.utils.request import get_request_args
 from research.utils.route import api_route
 from research.model.vote import Vote, Options, ResultVote
+from research.log import get_logger
 
 
 vote = Blueprint('vote', __name__)
+logger = get_logger(__name__)
 
 
 def add_vote(*args, **kwargs):
@@ -107,8 +109,8 @@ def edit_vote(*args, **kwargs):
              Options.is_deleted == 0])
 
 
-def get_vote_result(vote_id):
-    """获取投票的结果."""
+def get_vote_result(vote_id, wx_open_id):
+    """获取当前投票人及总的投票结果."""
     options = Options.query(
         Options,
         filter=[
@@ -120,26 +122,42 @@ def get_vote_result(vote_id):
         [ResultVote.is_deleted == 0,
          ResultVote.vote_id == vote_id],
         True)
+
+    current_voter_options = []
     for option in options:
         option_id = option.id
+        option_desc = option.desc
+        option_pic = option.pic
         vote_results = ResultVote.query(
             ResultVote,
             filter=[
                 ResultVote.is_deleted == 0,
                 ResultVote.option_id == option_id])
         vote_num = len(vote_results)
-        voters = [
-            {'wx_nick_name': voter.wx_nick_name,
-             'wx_open_id': voter.wx_open_id,
-             'avatar_url': voter.avatar_url} for voter in vote_results]
+
+        voters = []
+        for voter in vote_results:
+            logger.info('wx_open_id:{}, voter.wx_open_id:{}'.format(
+                        wx_open_id, voter.wx_open_id))
+            if voter.wx_open_id == wx_open_id:
+                current_voter_options.append(option_id)
+            voters.append({
+                'wx_nick_name': voter.wx_nick_name,
+                'wx_open_id': voter.wx_open_id,
+                'avatar_url': voter.avatar_url
+            })
+
         data.append({
             'option_id': option_id,
+            'option_desc': option_desc,
+            'option_pic': option_pic,
             'vote_num': vote_num,
             'voters': voters,
             'vote_rate': int(100.0 * vote_num / participant_num if participant_num else 0)
         })
     return {
         'participant_num': participant_num,
+        'current_voter_options': current_voter_options,
         'data': data
     }
 
@@ -159,6 +177,11 @@ def post_vote_result(vote_id,
                 wx_open_id=voter_wx_open_id,
                 avatar_url=avatar_url))
     ResultVote.batch_add(results)
+    # 如果之前此人已经投票过，需要将之前的投票结果删除
+    ResultVote.update(
+        {'is_deleted': 1},
+        [ResultVote.wx_open_id == voter_wx_open_id,
+         ~ResultVote.option_id.in_(option_id_list)])
 
 
 @api_route(vote, '', methods=['GET', 'POST', 'PUT'])
@@ -181,7 +204,7 @@ def vote_result_handle(*args, **kwargs):
     voter_wx_open_id = params.get('voter_wx_open_id')
     avatar_url = params.get('avatar_url')
     if request.method == 'GET':
-        return get_vote_result(vote_id)
+        return get_vote_result(vote_id, voter_wx_open_id)
     elif request.method == 'POST':
         return post_vote_result(
             vote_id,

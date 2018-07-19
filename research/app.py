@@ -4,6 +4,7 @@ from flask import Flask, request
 from research.vote.server import vote
 from research.feedback import feedback
 from research.notice import notice
+from research.file import file
 from research.log import get_logger
 
 
@@ -38,5 +39,6 @@ def haha():
 app.register_blueprint(vote, url_prefix='/vote')
 app.register_blueprint(feedback, url_prefix='/feedback')
 app.register_blueprint(notice, url_prefix='/notice')
+app.register_blueprint(file, url_prefix='/file')
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=7000, debug=True)
