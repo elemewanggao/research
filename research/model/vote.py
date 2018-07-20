@@ -21,6 +21,7 @@ class Vote(Base, BaseModel):
     is_open = Column(SmallInteger, default=1)
     wx_nick_name = Column(String(32))
     wx_open_id = Column(String(32))
+    wx_avatar_url = Column(String(128), default='')
     created_at = Column(DateTime, nullable=False, default=datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.now)
 

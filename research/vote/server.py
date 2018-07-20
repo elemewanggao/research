@@ -41,7 +41,8 @@ def get_vote(vote_id=None, creater_open_id=None, voter_open_id=None):
             common_vote_ids = [vote.id for vote in votes]
     if voter_open_id:
         revotes = ResultVote.query(ResultVote, filter=[
-            ResultVote.voter_open_id == voter_open_id])
+            ResultVote.voter_open_id == voter_open_id,
+            ResultVote.is_deleted == 0])
         revote_ids = [revote.id for revote in revotes]
         if revote_ids:
             common_vote_ids = list(set(common_vote_ids) & set(revote_ids))
@@ -49,6 +50,10 @@ def get_vote(vote_id=None, creater_open_id=None, voter_open_id=None):
     votes = Vote.query(Vote, filter=[Vote.id.in_(common_vote_ids)])
     for vote in votes:
         vid = vote.id
+        vote_num = ResultVote.count(
+            [ResultVote.id],
+            [ResultVote.vote_id == vid,
+             ResultVote.is_deleted == 0])
         vote_result = {
             'vote_id': vid,
             'topic': vote.topic,
@@ -59,8 +64,10 @@ def get_vote(vote_id=None, creater_open_id=None, voter_open_id=None):
             'sel_type': vote.sel_type,
             'is_open': vote.is_open,
             'status': 1 if datetime.now() < vote.deadline_time else 2,
+            'creater_avatar_url': vote.wx_avatar_url,
             'creater_nick_name': vote.wx_nick_name,
-            'creater_open_id': vote.wx_open_id}
+            'creater_open_id': vote.wx_open_id,
+            'vote_num': vote_num}
         options = Options.query(Options, filter=[
             Options.vote_id == vid,
             Options.is_deleted == 0])

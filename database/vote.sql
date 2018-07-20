@@ -9,6 +9,7 @@ create table `vote` (
     `is_open` tinyint(4) not null default 1 comment '投票结果是否对发起者之外的人可见 1:公开 0:不公开',
     `wx_nick_name` varchar(32) not null default '' comment '发起者的微信昵称',
     `wx_open_id` varchar(32) not null default '' comment '发起者微信open_id',
+    `wx_avatar_url` varchar(128) not null default '' comment '发起人头像url',
     `created_at` datetime not null default current_timestamp comment '创建时间',
     `updated_at` datetime not null default current_timestamp on update current_timestamp comment '更新时间',
     primary key (`id`),
