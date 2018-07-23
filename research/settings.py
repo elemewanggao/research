@@ -54,3 +54,8 @@ MYSQL = {
         'db': 'research',
     }
 }
+
+# 小程序配置
+APP_ID = 'wx531fbd69492dcdbb'
+APP_SECRET = 'fd4b7260208b8127cc792d590fde5db7'
+wx_check = 'https://api.weixin.qq.com/sns/jscode2session'
