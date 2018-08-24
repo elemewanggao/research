@@ -25,3 +25,4 @@ def get_wx_login(*args, **kwargs):
     print res.content
     res_dict = json.loads(res.content)
     return res_dict
+
