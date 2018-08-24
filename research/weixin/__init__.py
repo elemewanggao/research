@@ -16,6 +16,7 @@ def get_wx_login(*args, **kwargs):
 
     res = requests.get(
         url=wx_check,
+
         params={
             'appid': APP_ID,
             'secret': APP_SECRET,

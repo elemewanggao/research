@@ -13,6 +13,7 @@ logger = get_logger(__name__)
 app = Flask(__name__)
 
 
+
 @app.before_request
 def before_request():
     logger.info('request come, {method}:{url}'.format(
