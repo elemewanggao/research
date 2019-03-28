@@ -31,7 +31,7 @@ init_engines()
 def get_session(db):
     return scoped_session(sessionmaker(
         bind=engines[db],
-        expire_on_commit=False))
+        f=False))
 
 
 @contextmanager
