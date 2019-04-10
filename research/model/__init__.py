@@ -15,6 +15,7 @@ Base = declarative_base()
 
 
 def init_engines():
+    """初始化数据库连接"""
     for k, v in MYSQL.iteritems():
         mysql_url = ("mysql+pymysql://{user}:{passwd}@{host}:{port}/{db}"
                      "?charset=utf8".format(**v))
@@ -29,9 +30,10 @@ init_engines()
 
 
 def get_session(db):
+    """获取session"""
     return scoped_session(sessionmaker(
         bind=engines[db],
-        f=False))
+        expire_on_commit=False))
 
 
 @contextmanager
